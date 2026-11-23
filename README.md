@@ -274,6 +274,20 @@ El middleware de autenticación vuelve a consultar PostgreSQL. Esto significa qu
 
 ## Endpoints
 
+Resumen rápido:
+
+| Método | Ruta | Autenticación | Permiso / rol |
+|---|---|---|---|
+| `GET` | `/up` | No | Ninguno |
+| `POST` | `/api/auth/register` | No | Ninguno |
+| `POST` | `/api/auth/login` | No | Ninguno |
+| `GET` | `/api/profile` | Sí | Ninguno |
+| `GET` | `/api/users` | Sí | `users:read` |
+| `GET` | `/api/users/:id` | Sí | `users:read` |
+| `PATCH` | `/api/users/:id` | Sí | `users:update` y, para cambiar el rol, `roles:manage` |
+| `PATCH` | `/api/users/:id/suspend` | Sí | Rol `admin` o `moderator` y permiso `users:suspend` |
+| `PATCH` | `/api/users/:id/activate` | Sí | Rol `admin` o `moderator` y permiso `users:suspend` |
+
 ### Salud de la API
 
 #### `GET /up`
@@ -377,6 +391,28 @@ Ejemplo:
 
 ```text
 GET /api/users?status=active&role=user&search=ejemplo&limit=20&offset=0
+```
+
+Respuesta de ejemplo:
+
+```json
+{
+  "users": [
+    {
+      "id": 2,
+      "full_name": "Usuario Ejemplo",
+      "email": "usuario@example.com",
+      "role_id": 3,
+      "role": "user",
+      "status": "active",
+      "suspended_at": null,
+      "suspension_reason": null,
+      "created_at": "2026-11-23T00:20:00.000Z",
+      "updated_at": "2026-11-23T00:20:00.000Z"
+    }
+  ],
+  "count": 1
+}
 ```
 
 ### Consultar un usuario
