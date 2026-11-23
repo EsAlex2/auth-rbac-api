@@ -36,7 +36,7 @@ INSERT INTO users (full_name, email, password_hash, role_id, status)
 VALUES (
     'Admin Principal',
     'admin@practica.local',
-    '$2a$12$WIGyuR1KDrgMaBni8IXKmuNnu2LI0tHzRAoMXmy5N6jGJptbYlBaG',
+    '$2b$12$bG8TyE2lg3IPGJxK25STheaxYFgtiFDIVWjgzYGYsfW3q/ske8bi2',
     (SELECT id FROM roles WHERE name = 'admin'),
     'active'
 )

@@ -32,7 +32,51 @@ async function findUserById(userId) {
   return rows[0] || null;
 }
 
+async function listUsers({ status, role, search, limit = 50, offset = 0 } = {}) {
+  const conditions = [];
+  const values = [];
+  let paramIndex = 1;
+
+  if (status && ['active', 'suspended'].includes(status)) {
+    conditions.push(`u.status = $${paramIndex++}`);
+    values.push(status);
+  }
+  if (role) {
+    conditions.push(`r.name = $${paramIndex++}`);
+    values.push(String(role).trim());
+  }
+  if (search) {
+    conditions.push(`(u.full_name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`);
+    values.push(`%${String(search).trim()}%`);
+    paramIndex++;
+  }
+
+  const safeLimit = Number.isInteger(Number(limit))
+    ? Math.min(Math.max(Number(limit), 1), 100)
+    : 50;
+  const safeOffset = Number.isInteger(Number(offset))
+    ? Math.max(Number(offset), 0)
+    : 0;
+  values.push(safeLimit, safeOffset);
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const { rows } = await db.query(
+    `SELECT ${USER_PUBLIC_FIELDS}
+     FROM users u
+     JOIN roles r ON r.id = u.role_id
+     ${whereClause}
+     ORDER BY u.created_at DESC, u.id DESC
+     LIMIT $${paramIndex++} OFFSET $${paramIndex}`,
+    values
+  );
+  return rows;
+}
+
 async function updateUser(targetUserId, payload, actorUser) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new AppError('El cuerpo de la solicitud debe ser un objeto JSON', 400, 'INVALID_REQUEST_BODY');
+  }
+
   const numericId = Number(targetUserId);
   if (!Number.isInteger(numericId) || numericId <= 0) {
     throw new AppError('ID de usuario inválido', 400, 'INVALID_USER_ID');
@@ -87,13 +131,17 @@ async function updateUser(targetUserId, payload, actorUser) {
       );
     }
 
-    const roleCheck = await db.query('SELECT id FROM roles WHERE id = $1', [Number(payload.role_id)]);
+    const roleId = Number(payload.role_id);
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+      throw new AppError('El role_id debe ser un entero positivo', 400, 'INVALID_ROLE_ID');
+    }
+    const roleCheck = await db.query('SELECT id FROM roles WHERE id = $1', [roleId]);
     if (roleCheck.rows.length === 0) {
       throw new AppError('El rol indicado no existe', 404, 'ROLE_NOT_FOUND');
     }
 
     fields.push(`role_id = $${paramIndex++}`);
-    values.push(Number(payload.role_id));
+    values.push(roleId);
   }
 
   if (fields.length === 0) {
@@ -194,6 +242,7 @@ async function setUserStatus(targetUserId, nextStatus, reason, actorUser) {
 module.exports = {
   AppError,
   findUserById,
+  listUsers,
   updateUser,
   setUserStatus,
 };

@@ -26,7 +26,10 @@ const LOGIN_USER_QUERY = `
   GROUP BY u.id, r.name
 `;
 
-async function registerUser({ full_name, email, password }) {
+async function registerUser(payload = {}) {
+  const full_name = payload.full_name;
+  const email = payload.email;
+  const password = payload.password;
   const cleanName = full_name ? String(full_name).trim() : '';
   const cleanEmail = email ? String(email).trim().toLowerCase() : '';
   const rawPassword = password ? String(password) : '';
@@ -102,7 +105,9 @@ async function registerUser({ full_name, email, password }) {
   return rows[0];
 }
 
-async function loginUser({ email, password }) {
+async function loginUser(payload = {}) {
+  const email = payload.email;
+  const password = payload.password;
   const cleanEmail = email ? String(email).trim().toLowerCase() : '';
   const rawPassword = password ? String(password) : '';
 
@@ -111,6 +116,14 @@ async function loginUser({ email, password }) {
       'Debes enviar email y password',
       400,
       'MISSING_CREDENTIALS'
+    );
+  }
+
+  if (!process.env.JWT_SECRET) {
+    throw new AppError(
+      'La configuración de autenticación no está disponible',
+      500,
+      'AUTH_CONFIGURATION_ERROR'
     );
   }
 

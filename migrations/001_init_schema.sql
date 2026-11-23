@@ -45,3 +45,4 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role_id ON users(role_id);
 CREATE INDEX idx_users_status ON users(status);
+CREATE UNIQUE INDEX idx_users_email_lower ON users (LOWER(email));

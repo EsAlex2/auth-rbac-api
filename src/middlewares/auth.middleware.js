@@ -22,6 +22,14 @@ const USER_AUTH_QUERY = `
 
 async function authenticate(req, res, next) {
   try {
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET no está configurado');
+      return res.status(500).json({
+        message: 'La configuración de autenticación no está disponible',
+        code: 'AUTH_CONFIGURATION_ERROR',
+      });
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

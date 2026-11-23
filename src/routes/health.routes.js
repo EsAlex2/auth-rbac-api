@@ -3,7 +3,7 @@ const db = require('../config/db');
 
 const router = Router();
 
-router.get('/up', async (re, res) => {
+router.get('/up', async (req, res) => {
     try {
         const result = await db.query('SELECT NOW() AS server_time');
         res.status(200).json({
